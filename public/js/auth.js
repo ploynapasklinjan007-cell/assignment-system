@@ -101,55 +101,49 @@ function showAuthModal(role) {
       `;
     }
 
-function showOTPForm(email) {
+async function showOTPForm(email) {
   const normalizedEmail = email.trim().toLowerCase();
 
-  // ⭐ ไม่ await
-  fetch('/api/auth/send-otp', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: normalizedEmail })
-  });
+  try {
+    const res = await fetch('/api/auth/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: normalizedEmail })
+    });
 
-  document.getElementById('authContent').innerHTML = `
-    <div class="text-center mb-6">
-      <div class="text-4xl mb-2">📧</div>
-      <h2 class="text-xl font-bold text-gray-800">ยืนยันอีเมล</h2>
-      <p class="text-sm text-gray-600 mt-2">
-        ระบบได้ส่งรหัส OTP ไปยังอีเมลของคุณแล้ว
-      </p>
-      <p class="text-sm text-purple-600 font-medium">${normalizedEmail}</p>
-    </div>
+    const data = await res.json();
 
-    <form onsubmit="verifyOTP(event, '${normalizedEmail}')">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">
-          กรอกรหัส OTP (6 หลัก)
-        </label>
-        <input
-          type="text"
-          id="otpInput"
-          required
-          maxlength="6"
-          class="w-full px-4 py-3 rounded-xl text-center text-2xl"
-          placeholder="000000"
-        >
+    if (!res.ok) {
+      alert(data.message || 'ไม่สามารถส่ง OTP ได้');
+      return;
+    }
+
+    // ถ้าส่งสำเร็จจริง ค่อย render หน้า OTP
+    document.getElementById('authContent').innerHTML = `
+      <div class="text-center mb-6">
+        <div class="text-4xl mb-2">📧</div>
+        <h2 class="text-xl font-bold text-gray-800">ยืนยันอีเมล</h2>
+        <p class="text-sm text-gray-600 mt-2">
+          ระบบได้ส่งรหัส OTP ไปยังอีเมลของคุณแล้ว
+        </p>
+        <p class="text-sm text-purple-600 font-medium">${normalizedEmail}</p>
       </div>
 
-      <button
-        type="button"
-        onclick="resendOTP('${normalizedEmail}')"
-        class="w-full text-sm text-purple-600 hover:underline mt-2"
-      >
-        ส่งรหัส OTP อีกครั้ง
-      </button>
+      <form onsubmit="verifyOTP(event, '${normalizedEmail}')">
+        <input type="text" id="otpInput" required maxlength="6"
+          class="w-full px-4 py-3 rounded-xl text-center text-2xl"
+          placeholder="000000">
+        <button type="submit"
+          class="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-xl mt-4">
+          ยืนยัน
+        </button>
+      </form>
+    `;
 
-      <button type="submit"
-        class="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-xl mt-4">
-        ยืนยัน
-      </button>
-    </form>
-  `;
+  } catch (err) {
+    console.error(err);
+    alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+  }
 }
 
 async function handleLogin(e) {
